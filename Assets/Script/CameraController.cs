@@ -6,9 +6,9 @@ public class CameraController : MonoBehaviour
 
     
 
-    public float fastSpeed = 0.2f;
-    public float normalSpeed = 0.05f;
-    public float movementSpeed = 0.1f;
+    public float fastSpeed = 0.05f;
+    public float normalSpeed = 0.01f;
+    public float movementSpeed = 0.01f;
     public float movementTime = 5f;
     public float rotationAmount = 0.15f;
 
