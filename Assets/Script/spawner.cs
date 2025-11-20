@@ -25,6 +25,7 @@ public class spawner : MonoBehaviour
         {
             crabs[i] = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity);
         }
+        
     }
 
     // Update is called once per frame
