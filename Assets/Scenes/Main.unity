@@ -721,6 +721,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AlgueGen
   alguePrefab: {fileID: 1668287693937054785, guid: 78db8a62eaa4b25458fc98f428b5062e, type: 3}
+  maxAlgueCount: 1000
   algueCount: 1000
   plane: {fileID: 57671890}
   generationInterval: 1

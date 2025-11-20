@@ -14,6 +14,8 @@ public class AlgueGen : MonoBehaviour
     private GameObject alguePrefab;
 
     [SerializeField]
+    private int maxAlgueCount = 1000;
+    [SerializeField]
     private int algueCount = 50;
 
     [SerializeField]
@@ -40,10 +42,10 @@ public class AlgueGen : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         // Generate algue every n seconds
-        if (Time.frameCount % (generationInterval * 60) == 0)
+        if (Time.frameCount % (generationInterval * 50) == 0)
         {  
             GenerateAlgue();
             algueCount++;
@@ -59,6 +61,6 @@ public class AlgueGen : MonoBehaviour
             Random.Range(min.z, max.z)
         );
 
-        Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+        Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), gameObject.transform);
     }
 }

@@ -14,6 +14,13 @@ public class Crab : MonoBehaviour
 
     public NavMeshAgent agent;
 
+    private Vector3 targetPos;
+    private float foodLevel;
+    private float age;
+
+    private Genes genes;
+
+    const float TARGET_OFFSET = 0.3f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -29,17 +36,25 @@ public class Crab : MonoBehaviour
     void Update()
     {
 
-        if (!agent.hasPath || agent.remainingDistance < 0.5f)
+        GameObject hotCrabInYourVicinity = seeHorny();
+        GameObject yummyYummySeaGrass = smelledFood();
+        if (isHorny() && hotCrabInYourVicinity != null)
+            targetPos = hotCrabInYourVicinity.transform.position;
+        else if (yummyYummySeaGrass != null)
+            targetPos = yummyYummySeaGrass.transform.position;
+        else if (!agent.hasPath || agent.remainingDistance < 0.5f)
         {
             Vector3 randomDirection = Random.insideUnitSphere * 10f;
             randomDirection += transform.position;
             NavMeshHit hit;
             NavMesh.SamplePosition(randomDirection, out hit, 10f, 1);
-            Vector3 finalPosition = hit.position;
-            agent.SetDestination(finalPosition);
-            
+            targetPos = hit.position;
         }
 
+        if ((targetPos - agent.destination).sqrMagnitude >= TARGET_OFFSET)
+        {
+            agent.SetDestination(targetPos);
+        }
 
         // Orient the crab to face its moving direction
         if (agent.velocity.sqrMagnitude > 0.1f)
@@ -54,4 +69,37 @@ public class Crab : MonoBehaviour
         return m_weight;
     }
 
+    public bool isHorny()
+    {
+        return foodLevel >= genes.libidoThreshold;
+    }
+
+    public GameObject seeHorny()
+    {
+        // TODO return closest horny crab (not self)
+        return null;
+    }
+
+    public GameObject smelledFood()
+    {
+        return null;
+    }
+}
+
+enum States {
+    Wandering,
+    Eating,
+    Mating,
+}
+
+struct Genes {
+    public float speed;
+    public float weight;
+    public float smell;
+    public int minChild;
+    public int maxChild;
+    public float libidoThreshold;
+    public float vision;
+    public float childRatio;
+    public float maxFoodLevel;
 }
