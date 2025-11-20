@@ -84,6 +84,72 @@ public class Crab : MonoBehaviour
     {
         return null;
     }
+
+
+    public void mate(Crab partner)
+    {
+        for(int i = 0; i < Random.Range(this.genes.minChild, this.genes.maxChild + 1); i++)
+        {
+            make_baby(partner);
+        }
+    
+    }
+
+    public void make_baby(Crab partner)
+    {
+        Genes childGenes = new Genes();
+
+        const float MUTATION_OFFSET = 1f;
+
+        // Give a random speed between the two parents
+        childGenes.speed = Random.Range(
+            Mathf.Min(this.genes.speed, partner.genes.speed) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.speed, partner.genes.speed) + MUTATION_OFFSET
+        );
+        // Give a random weight between the two parents
+        childGenes.weight = Random.Range(
+            Mathf.Min(this.genes.weight, partner.genes.weight) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.weight, partner.genes.weight) + MUTATION_OFFSET
+        );
+
+        // Give a random smell between the two parents
+        childGenes.smell = Random.Range(
+            Mathf.Min(this.genes.smell, partner.genes.smell) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.smell, partner.genes.smell) + MUTATION_OFFSET
+        );
+
+        minChild = Mathf.Min(this.genes.minChild, partner.genes.minChild);
+        maxChild = Mathf.Max(this.genes.maxChild, partner.genes.maxChild);
+
+        // Give a random libido threshold between the two parents
+
+        childGenes.libidoThreshold = Random.Range(
+            Mathf.Min(this.genes.libidoThreshold, partner.genes.libidoThreshold) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.libidoThreshold, partner.genes.libidoThreshold) + MUTATION_OFFSET
+        );
+        
+        // Give a random vision between the two parents
+        childGenes.vision = Random.Range(
+            Mathf.Min(this.genes.vision, partner.genes.vision) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.vision, partner.genes.vision) + MUTATION_OFFSET
+        );
+
+        // Give a random child ratio between the two parents
+        childGenes.childRatio = Random.Range(
+            Mathf.Min(this.genes.childRatio, partner.genes.childRatio) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.childRatio, partner.genes.childRatio) + MUTATION_OFFSET
+        );
+
+        // Give a random max food level between the two parents
+        childGenes.maxFoodLevel = Random.Range(
+            Mathf.Min(this.genes.maxFoodLevel, partner.genes.maxFoodLevel) - MUTATION_OFFSET,
+            Mathf.Max(this.genes.maxFoodLevel, partner.genes.maxFoodLevel) + MUTATION_OFFSET
+        );
+        
+        Crab child =
+            Instantiate(this, this.transform.position + new Vector3(1, 0, 1), Quaternion.identity);
+        child.genes = childGenes;
+        child.foodLevel = 0.5f * child.genes.maxFoodLevel;    }
 }
 
 enum States {
