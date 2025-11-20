@@ -52,6 +52,7 @@ public class Crab : MonoBehaviour
         foodLevel -= METABOLISM * Time.deltaTime;
         if (foodLevel < 0) {
             transform.localScale = new Vector3(1, -1, 1);
+            agent.ResetPath();
             Destroy(gameObject, 5f);
             return;
         }
