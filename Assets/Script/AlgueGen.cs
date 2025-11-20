@@ -47,10 +47,10 @@ public class AlgueGen : MonoBehaviour
         // Generate algue every n seconds
         if (Time.frameCount % (generationInterval * 50) == 0)
         {  
-            GenerateAlgue();
-            algueCount++;
+            if (gameObject.transform.childCount <= maxAlgueCount) {
+                GenerateAlgue();
+            }
         }
-        
     }
 
     private void GenerateAlgue()

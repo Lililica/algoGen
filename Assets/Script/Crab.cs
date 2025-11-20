@@ -12,11 +12,16 @@ public class Crab : MonoBehaviour
     [SerializeField]
     private int m_weight = 10;
 
-    public NavMeshAgent agent;
+    [SerializeField]
+    private LayerMask seaFoodLayer;
+    [SerializeField]
+    private LayerMask crabLayer;
 
     private Vector3 targetPos;
     private float foodLevel;
     private float age;
+
+    private NavMeshAgent agent;
 
     private Genes genes;
 
@@ -25,6 +30,7 @@ public class Crab : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        agent = gameObject.GetComponent<NavMeshAgent>();
         m_speed = Random.Range(0.5f, 10f);
         m_weight = Random.Range(1, 40);
 
@@ -77,12 +83,43 @@ public class Crab : MonoBehaviour
     public GameObject seeHorny()
     {
         // TODO return closest horny crab (not self)
-        return null;
+        Collider[] crabs = Physics.OverlapSphere(
+            gameObject.transform.position,
+            genes.vision,
+            crabLayer.value
+        );
+
+        if (crabs == null) return null;
+
+        GameObject closest = crabs[0].gameObject;
+        foreach (Collider coll in crabs) {
+            Crab crab = coll.gameObject.GetComponent<Crab>();
+            if (
+                crab != null &&
+                crab.isHorny() &&
+                (transform.position - coll.transform.position).sqrMagnitude < (transform.position - closest.transform.position).sqrMagnitude
+            )
+                closest = coll.gameObject;
+        }
+        return closest;
     }
 
     public GameObject smelledFood()
     {
-        return null;
+        Collider[] seeWeeds = Physics.OverlapSphere(
+            gameObject.transform.position,
+            genes.smell,
+            seaFoodLayer.value
+        );
+
+        if (seeWeeds == null) return null;
+
+        GameObject closest = seeWeeds[0].gameObject;
+        foreach (Collider coll in seeWeeds) {
+            if ((transform.position - coll.transform.position).sqrMagnitude < (transform.position - closest.transform.position).sqrMagnitude)
+                closest = coll.gameObject;
+        }
+        return closest;
     }
 
 
