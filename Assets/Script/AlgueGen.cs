@@ -29,11 +29,13 @@ public class AlgueGen : MonoBehaviour
     private Vector3 min;
     private Vector3 max;
 
+    private float timeSinceGeneration = 0f;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        min = plane.GetComponent<Renderer>().bounds.min;
-        max = plane.GetComponent<Renderer>().bounds.max;
+        min = plane.GetComponent<Renderer>().bounds.min + Vector3.one * 0.5f;
+        max = plane.GetComponent<Renderer>().bounds.max - Vector3.one * 0.5f;
 
         for(int i = 0; i < algueCount; i++)
         {
@@ -45,11 +47,13 @@ public class AlgueGen : MonoBehaviour
     void FixedUpdate()
     {
         // Generate algue every n seconds
-        if (Time.frameCount % (generationInterval * 50) == 0)
+        timeSinceGeneration -= Time.deltaTime;
+        while (timeSinceGeneration <= 0f)
         {  
             if (gameObject.transform.childCount <= maxAlgueCount) {
                 GenerateAlgue();
             }
+            timeSinceGeneration += generationInterval;
         }
     }
 

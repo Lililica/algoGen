@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 3633209841189945320}
   - component: {fileID: 546275646676669761}
   - component: {fileID: 113560732624299527}
+  - component: {fileID: 7562553734364705716}
+  - component: {fileID: 6111289388188448523}
   m_Layer: 3
   m_Name: Crab
   m_TagString: Untagged
@@ -50,10 +52,12 @@ MonoBehaviour:
   m_weight: 10
   seaFoodLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 64
   crabLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
+  creationTime: 0
+  foodLevel: 0
 --- !u!195 &113560732624299527
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -76,6 +80,54 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!54 &7562553734364705716
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8486192436040496584}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!135 &6111289388188448523
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8486192436040496584}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0.52, z: 0}
 --- !u!1001 &5535822538476591478
 PrefabInstance:
   m_ObjectHideFlags: 0

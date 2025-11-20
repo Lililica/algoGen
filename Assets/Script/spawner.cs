@@ -24,6 +24,9 @@ public class spawner : MonoBehaviour
         for (int i = 0; i < numberOfCrabs; i++)
         {
             crabs[i] = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity);
+            Crab crab = crabs[i].GetComponent<Crab>();
+            crab.ShuffleGenes();
+            crab.FullBelly();
         }
         
     }
@@ -45,7 +48,7 @@ public class spawner : MonoBehaviour
                     Crab crab1 = crabs[i].GetComponent<Crab>();
                     Crab crab2 = crabs[j].GetComponent<Crab>();
 
-                    if (crab1.get_weight() > crab2.get_weight())
+                    if (crab1.GetWeight() > crab2.GetWeight())
                     {
                         Destroy(crabs[j]);
                     }

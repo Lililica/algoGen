@@ -10,44 +10,65 @@ public class Crab : MonoBehaviour
     private float m_speed = 1f;
 
     [SerializeField]
-    private int m_weight = 10;
+    private float m_weight = 10;
 
     [SerializeField]
     private LayerMask seaFoodLayer;
     [SerializeField]
     private LayerMask crabLayer;
 
+    [SerializeField]
+    private float creationTime = 0f;
+
     private Vector3 targetPos;
+    [SerializeField]
     private float foodLevel;
     private float age;
 
     private NavMeshAgent agent;
 
+    [SerializeField]
     private Genes genes;
 
     const float TARGET_OFFSET = 0.3f;
+    const float METABOLISM = 0.1f;
+    const float INTERACT_DIST = 0.5f;
+    const float FOOD_PER_BITE = 1f;
+    const float MAX_CHILD_RATIO = .95f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         agent = gameObject.GetComponent<NavMeshAgent>();
-        m_speed = Random.Range(0.5f, 10f);
-        m_weight = Random.Range(1, 40);
+        m_speed = genes.speed;
+        m_weight = genes.weight;
 
         agent.speed = m_speed;
         this.transform.localScale = Vector3.one * (1 + m_weight / 40f);
     }
 
-    // Update is called once per frame
     void Update()
     {
+        foodLevel -= METABOLISM * Time.deltaTime;
+        if (foodLevel < 0) {
+            transform.localScale = new Vector3(1, -1, 1);
+            Destroy(gameObject, 5f);
+            return;
+        }
 
-        GameObject hotCrabInYourVicinity = seeHorny();
-        GameObject yummyYummySeaGrass = smelledFood();
-        if (isHorny() && hotCrabInYourVicinity != null)
+        GameObject hotCrabInYourVicinity = SeeHorny();
+        GameObject yummyYummySeaGrass = SmelledFood();
+        if (IsHorny() && hotCrabInYourVicinity != null) {
             targetPos = hotCrabInYourVicinity.transform.position;
-        else if (yummyYummySeaGrass != null)
+            if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
+                Debug.Log("Seks");
+                Mate(hotCrabInYourVicinity.GetComponent<Crab>());
+        }
+        else if (yummyYummySeaGrass != null) {
             targetPos = yummyYummySeaGrass.transform.position;
+            if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
+                NomNom(yummyYummySeaGrass.gameObject);
+        }
         else if (!agent.hasPath || agent.remainingDistance < 0.5f)
         {
             Vector3 randomDirection = Random.insideUnitSphere * 10f;
@@ -70,41 +91,50 @@ public class Crab : MonoBehaviour
         }
     }
 
-    public int get_weight()
+    public float GetWeight()
     {
         return m_weight;
     }
 
-    public bool isHorny()
+    public bool IsHorny()
     {
         return foodLevel >= genes.libidoThreshold;
     }
 
-    public GameObject seeHorny()
+    public GameObject SeeHorny()
     {
-        // TODO return closest horny crab (not self)
         Collider[] crabs = Physics.OverlapSphere(
             gameObject.transform.position,
-            genes.vision,
+            genes.smell,
             crabLayer.value
         );
 
-        if (crabs == null) return null;
+        if (crabs == null || crabs.Length == 0) return null;
 
         GameObject closest = crabs[0].gameObject;
+        Crab crab = closest.gameObject.GetComponent<Crab>();
+
+        if (crab == this) {
+            if (crabs.Length == 1) return null;
+            else closest = crabs[1].gameObject;
+        }
+
         foreach (Collider coll in crabs) {
-            Crab crab = coll.gameObject.GetComponent<Crab>();
+            crab = coll.gameObject.GetComponent<Crab>();
             if (
                 crab != null &&
-                crab.isHorny() &&
+                crab != this &&
+                crab.IsHorny() &&
                 (transform.position - coll.transform.position).sqrMagnitude < (transform.position - closest.transform.position).sqrMagnitude
             )
                 closest = coll.gameObject;
+            return closest;
         }
-        return closest;
+
+        return null;
     }
 
-    public GameObject smelledFood()
+    public GameObject SmelledFood()
     {
         Collider[] seeWeeds = Physics.OverlapSphere(
             gameObject.transform.position,
@@ -112,7 +142,7 @@ public class Crab : MonoBehaviour
             seaFoodLayer.value
         );
 
-        if (seeWeeds == null) return null;
+        if (seeWeeds == null || seeWeeds.Length == 0) return null;
 
         GameObject closest = seeWeeds[0].gameObject;
         foreach (Collider coll in seeWeeds) {
@@ -122,17 +152,24 @@ public class Crab : MonoBehaviour
         return closest;
     }
 
-
-    public void mate(Crab partner)
+    private void NomNom(GameObject seeGrass)
     {
-        for(int i = 0; i < Random.Range(this.genes.minChild, this.genes.maxChild + 1); i++)
-        {
-            make_baby(partner);
-        }
-    
+        Destroy(seeGrass);
+        if (foodLevel <= genes.maxFoodLevel) foodLevel += FOOD_PER_BITE;
     }
 
-    public void make_baby(Crab partner)
+    public void Mate(Crab partner)
+    {
+        int babyNumber = Random.Range(this.genes.minChild, this.genes.maxChild + 1);
+        for (int i = 0; i < babyNumber; i++)
+        {
+            MakeBaby(partner);
+        }
+
+        foodLevel *= genes.childRatio;
+    }
+
+    public void MakeBaby(Crab partner)
     {
         Genes childGenes = new Genes();
 
@@ -155,8 +192,8 @@ public class Crab : MonoBehaviour
             Mathf.Max(this.genes.smell, partner.genes.smell) + MUTATION_OFFSET
         );
 
-        minChild = Mathf.Min(this.genes.minChild, partner.genes.minChild);
-        maxChild = Mathf.Max(this.genes.maxChild, partner.genes.maxChild);
+        childGenes.minChild = Mathf.Min(this.genes.minChild, partner.genes.minChild);
+        childGenes.maxChild = Mathf.Max(this.genes.maxChild, partner.genes.maxChild);
 
         // Give a random libido threshold between the two parents
 
@@ -174,7 +211,7 @@ public class Crab : MonoBehaviour
         // Give a random child ratio between the two parents
         childGenes.childRatio = Random.Range(
             Mathf.Min(this.genes.childRatio, partner.genes.childRatio) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.childRatio, partner.genes.childRatio) + MUTATION_OFFSET
+            Mathf.Min(Mathf.Max(this.genes.childRatio, partner.genes.childRatio) + MUTATION_OFFSET, MAX_CHILD_RATIO)
         );
 
         // Give a random max food level between the two parents
@@ -186,7 +223,25 @@ public class Crab : MonoBehaviour
         Crab child =
             Instantiate(this, this.transform.position + new Vector3(1, 0, 1), Quaternion.identity);
         child.genes = childGenes;
-        child.foodLevel = 0.5f * child.genes.maxFoodLevel;    }
+        child.foodLevel = foodLevel * genes.childRatio;
+        child.creationTime = Time.time;
+    }
+
+    public void ShuffleGenes() {
+        genes.speed = Random.Range(4f, 20f);
+        genes.weight = Random.Range(4f, 40f);
+        genes.smell = Random.Range(4f, 20f);
+        genes.minChild = Random.Range(2, 4);
+        genes.maxChild = Random.Range(4, 6);
+        genes.libidoThreshold = Random.Range(4f, 20f);
+        genes.vision = Random.Range(4f, 20f);
+        genes.childRatio = Random.Range(0.2f, 0.8f);
+        genes.maxFoodLevel = Random.Range(4f, 20f);
+    }
+
+    public void FullBelly() {
+        foodLevel = genes.maxFoodLevel;
+    }
 }
 
 enum States {
