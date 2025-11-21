@@ -724,7 +724,7 @@ MonoBehaviour:
   maxAlgueCount: 1000
   algueCount: 1000
   plane: {fileID: 57671890}
-  generationInterval: 1
+  generationInterval: 0.3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

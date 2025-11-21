@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.AI;
 public class Crab : MonoBehaviour
 {
-
     // Crab stats
     [Header ("Crab Stats")]
 
@@ -32,9 +31,9 @@ public class Crab : MonoBehaviour
 
     const float TARGET_OFFSET = 0.3f;
     const float METABOLISM = 0.1f;
-    const float INTERACT_DIST = 0.5f;
+    const float INTERACT_DIST = 0.6f;
     const float FOOD_PER_BITE = 1f;
-    const float MAX_CHILD_RATIO = .95f;
+    const float MAX_CHILD_RATIO = .8f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -44,12 +43,14 @@ public class Crab : MonoBehaviour
         m_weight = genes.weight;
 
         agent.speed = m_speed;
+        agent.acceleration = genes.acceleration;
+        agent.angularSpeed = genes.steering;
         this.transform.localScale = Vector3.one * (1 + m_weight / 40f);
     }
 
     void Update()
     {
-        foodLevel -= METABOLISM * Time.deltaTime;
+        foodLevel -= (METABOLISM + (creationTime - Time.deltaTime)/97f) * Time.deltaTime;
         if (foodLevel < 0) {
             transform.localScale = new Vector3(1, -1, 1);
             agent.ResetPath();
@@ -174,63 +175,39 @@ public class Crab : MonoBehaviour
     {
         Genes childGenes = new Genes();
 
-        const float MUTATION_OFFSET = 1f;
 
-        // Give a random speed between the two parents
-        childGenes.speed = Random.Range(
-            Mathf.Min(this.genes.speed, partner.genes.speed) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.speed, partner.genes.speed) + MUTATION_OFFSET
-        );
-        // Give a random weight between the two parents
-        childGenes.weight = Random.Range(
-            Mathf.Min(this.genes.weight, partner.genes.weight) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.weight, partner.genes.weight) + MUTATION_OFFSET
-        );
+        childGenes.speed = GeneMix(genes.speed, partner.genes.speed);
+        childGenes.acceleration = GeneMix(genes.acceleration, partner.genes.acceleration);
+        childGenes.steering = GeneMix(genes.steering, partner.genes.steering);
+        childGenes.smell = GeneMix(genes.smell, partner.genes.smell);
+        childGenes.libidoThreshold = GeneMix(genes.libidoThreshold, partner.genes.libidoThreshold);
+        childGenes.vision = GeneMix(genes.vision, partner.genes.vision);
+        childGenes.childRatio = Mathf.Min(GeneMix(genes.childRatio, partner.genes.childRatio), MAX_CHILD_RATIO);
+        childGenes.maxFoodLevel = GeneMix(genes.maxFoodLevel, partner.genes.maxFoodLevel);
 
-        // Give a random smell between the two parents
-        childGenes.smell = Random.Range(
-            Mathf.Min(this.genes.smell, partner.genes.smell) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.smell, partner.genes.smell) + MUTATION_OFFSET
-        );
-
-        childGenes.minChild = Mathf.Min(this.genes.minChild, partner.genes.minChild);
-        childGenes.maxChild = Mathf.Max(this.genes.maxChild, partner.genes.maxChild);
-
-        // Give a random libido threshold between the two parents
-
-        childGenes.libidoThreshold = Random.Range(
-            Mathf.Min(this.genes.libidoThreshold, partner.genes.libidoThreshold) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.libidoThreshold, partner.genes.libidoThreshold) + MUTATION_OFFSET
-        );
-        
-        // Give a random vision between the two parents
-        childGenes.vision = Random.Range(
-            Mathf.Min(this.genes.vision, partner.genes.vision) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.vision, partner.genes.vision) + MUTATION_OFFSET
-        );
-
-        // Give a random child ratio between the two parents
-        childGenes.childRatio = Random.Range(
-            Mathf.Min(this.genes.childRatio, partner.genes.childRatio) - MUTATION_OFFSET,
-            Mathf.Min(Mathf.Max(this.genes.childRatio, partner.genes.childRatio) + MUTATION_OFFSET, MAX_CHILD_RATIO)
-        );
-
-        // Give a random max food level between the two parents
-        childGenes.maxFoodLevel = Random.Range(
-            Mathf.Min(this.genes.maxFoodLevel, partner.genes.maxFoodLevel) - MUTATION_OFFSET,
-            Mathf.Max(this.genes.maxFoodLevel, partner.genes.maxFoodLevel) + MUTATION_OFFSET
-        );
+        childGenes.minChild = Mathf.Min(genes.minChild, partner.genes.minChild);
+        childGenes.maxChild = Mathf.Max(genes.maxChild, partner.genes.maxChild);
         
         Crab child =
-            Instantiate(this, this.transform.position + new Vector3(1, 0, 1), Quaternion.identity);
+            Instantiate(this, transform.position + new Vector3(1, 0, 1), Quaternion.identity);
         child.genes = childGenes;
         child.foodLevel = foodLevel * genes.childRatio;
         child.creationTime = Time.time;
     }
 
+    private float GeneMix(float valueA, float valueB) {
+        const float MUTATION_OFFSET = 1.2f;
+
+        return Random.Range(
+            Mathf.Min(valueA, valueB) / MUTATION_OFFSET,
+            Mathf.Max(valueA, valueB) * MUTATION_OFFSET + 1f
+        );
+    }
+
     public void ShuffleGenes() {
         genes.speed = Random.Range(4f, 20f);
-        genes.weight = Random.Range(4f, 40f);
+        genes.acceleration = Random.Range(5f, 10f);
+        genes.steering = Random.Range(90f, 120f);
         genes.smell = Random.Range(4f, 20f);
         genes.minChild = Random.Range(2, 4);
         genes.maxChild = Random.Range(4, 6);
@@ -243,16 +220,21 @@ public class Crab : MonoBehaviour
     public void FullBelly() {
         foodLevel = genes.maxFoodLevel;
     }
+
+    void OnDrawGizmosSelected () {
+		Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, genes.smell);
+
+		Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, genes.vision);
+	}
 }
 
-enum States {
-    Wandering,
-    Eating,
-    Mating,
-}
-
+[System.Serializable]
 struct Genes {
     public float speed;
+    public float acceleration;
+    public float steering;
     public float weight;
     public float smell;
     public int minChild;
