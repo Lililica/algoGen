@@ -65,6 +65,6 @@ public class AlgueGen : MonoBehaviour
             Random.Range(min.z, max.z)
         );
 
-        Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), gameObject.transform);
+        Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
     }
 }

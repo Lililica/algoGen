@@ -11,6 +11,9 @@ public class spawner : MonoBehaviour
     private int numberOfCrabs = 10;
 
     [SerializeField]
+    public int maxNumberOfCrabs = 1000;
+
+    [SerializeField]
     private float collisionDistance = 1f;
 
     private GameObject[] crabs;
@@ -23,16 +26,17 @@ public class spawner : MonoBehaviour
         crabs = new GameObject[numberOfCrabs];
         for (int i = 0; i < numberOfCrabs; i++)
         {
-            crabs[i] = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity);
+            crabs[i] = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity, transform);
             Crab crab = crabs[i].GetComponent<Crab>();
             crab.ShuffleGenes();
             crab.FullBelly();
+            crab.eve = this;
         }
         
     }
 
     // Update is called once per frame
-    void Update()
+    void DontUpdate()
     {
         for (int i = 0; i < numberOfCrabs; i++)
         {
