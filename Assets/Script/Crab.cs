@@ -29,11 +29,15 @@ public class Crab : MonoBehaviour
     [SerializeField]
     private Genes genes;
 
+    [HideInInspector]
+    public spawner eve;
+
     const float TARGET_OFFSET = 0.3f;
     const float METABOLISM = 0.1f;
-    const float INTERACT_DIST = 0.6f;
-    const float FOOD_PER_BITE = 1f;
-    const float MAX_CHILD_RATIO = .8f;
+    const float SEX_REACH = 1.2f;
+    const float INTERACT_DIST = 0.5f;
+    const float FOOD_PER_BITE = 1.3f;
+    const float MAX_CHILD_RATIO = .95f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -50,7 +54,7 @@ public class Crab : MonoBehaviour
 
     void Update()
     {
-        foodLevel -= (METABOLISM + (creationTime - Time.deltaTime)/97f) * Time.deltaTime;
+        foodLevel -= (METABOLISM + (Time.time - creationTime)/271f) * Time.deltaTime;
         if (foodLevel < 0) {
             transform.localScale = new Vector3(1, -1, 1);
             agent.ResetPath();
@@ -62,8 +66,7 @@ public class Crab : MonoBehaviour
         GameObject yummyYummySeaGrass = SmelledFood();
         if (IsHorny() && hotCrabInYourVicinity != null) {
             targetPos = hotCrabInYourVicinity.transform.position;
-            if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
-                Debug.Log("Seks");
+            if ((targetPos - transform.position).sqrMagnitude <= SEX_REACH*SEX_REACH)
                 Mate(hotCrabInYourVicinity.GetComponent<Crab>());
         }
         else if (yummyYummySeaGrass != null) {
@@ -85,7 +88,7 @@ public class Crab : MonoBehaviour
             agent.SetDestination(targetPos);
         }
 
-        // Orient the crab to face its moving direction
+        // Orient the crab to side its moving direction
         if (agent.velocity.sqrMagnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(agent.velocity.normalized);
@@ -100,7 +103,7 @@ public class Crab : MonoBehaviour
 
     public bool IsHorny()
     {
-        return foodLevel >= genes.libidoThreshold;
+        return foodLevel >= genes.libidoThreshold && (Time.time - creationTime >= 1.5f);
     }
 
     public GameObject SeeHorny()
@@ -165,16 +168,16 @@ public class Crab : MonoBehaviour
         int babyNumber = Random.Range(this.genes.minChild, this.genes.maxChild + 1);
         for (int i = 0; i < babyNumber; i++)
         {
-            MakeBaby(partner);
+            if (eve.transform.childCount <= eve.maxNumberOfCrabs)
+                MakeBaby(partner);
         }
 
-        foodLevel *= genes.childRatio;
+        foodLevel *= 1 - genes.childRatio;
     }
 
     public void MakeBaby(Crab partner)
     {
         Genes childGenes = new Genes();
-
 
         childGenes.speed = GeneMix(genes.speed, partner.genes.speed);
         childGenes.acceleration = GeneMix(genes.acceleration, partner.genes.acceleration);
@@ -182,25 +185,35 @@ public class Crab : MonoBehaviour
         childGenes.smell = GeneMix(genes.smell, partner.genes.smell);
         childGenes.libidoThreshold = GeneMix(genes.libidoThreshold, partner.genes.libidoThreshold);
         childGenes.vision = GeneMix(genes.vision, partner.genes.vision);
-        childGenes.childRatio = Mathf.Min(GeneMix(genes.childRatio, partner.genes.childRatio), MAX_CHILD_RATIO);
+        childGenes.childRatio = Mathf.Clamp(ChildRatioMix(genes.childRatio, partner.genes.childRatio), 0f, MAX_CHILD_RATIO);
         childGenes.maxFoodLevel = GeneMix(genes.maxFoodLevel, partner.genes.maxFoodLevel);
 
         childGenes.minChild = Mathf.Min(genes.minChild, partner.genes.minChild);
         childGenes.maxChild = Mathf.Max(genes.maxChild, partner.genes.maxChild);
         
         Crab child =
-            Instantiate(this, transform.position + new Vector3(1, 0, 1), Quaternion.identity);
+            Instantiate(this, transform.position + new Vector3(1, 0, 1), Quaternion.identity, eve.transform);
         child.genes = childGenes;
         child.foodLevel = foodLevel * genes.childRatio;
         child.creationTime = Time.time;
+        child.eve = eve;
     }
 
     private float GeneMix(float valueA, float valueB) {
-        const float MUTATION_OFFSET = 1.2f;
+        const float MUTATION_OFFSET = 3f;
 
         return Random.Range(
-            Mathf.Min(valueA, valueB) / MUTATION_OFFSET,
-            Mathf.Max(valueA, valueB) * MUTATION_OFFSET + 1f
+            Mathf.Min(valueA, valueB) - MUTATION_OFFSET,
+            Mathf.Max(valueA, valueB) + MUTATION_OFFSET
+        );
+    }
+
+    private float ChildRatioMix(float valueA, float valueB) {
+        const float MUTATION_OFFSET = .005f;
+
+        return Random.Range(
+            Mathf.Min(valueA, valueB) - MUTATION_OFFSET,
+            Mathf.Max(valueA, valueB) + MUTATION_OFFSET
         );
     }
 
