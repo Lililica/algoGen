@@ -558,7 +558,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   crabPrefab: {fileID: 8486192436040496584, guid: 2aef31a3e5952410ca3da7d304f00c93, type: 3}
-  numberOfCrabs: 10
+  numberOfCrabs: 100
+  maxNumberOfCrabs: 1000
   collisionDistance: 1
 --- !u!4 &586111209
 Transform:
@@ -721,10 +722,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AlgueGen
   alguePrefab: {fileID: 1668287693937054785, guid: 78db8a62eaa4b25458fc98f428b5062e, type: 3}
-  maxAlgueCount: 1000
+  maxAlgueCount: 5000
   algueCount: 1000
   plane: {fileID: 57671890}
-  generationInterval: 0.3
+  generationInterval: 0.03
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -733,5 +734,5 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 57671894}
   - {fileID: 1246969831}
-  - {fileID: 586111209}
   - {fileID: 2050654670}
+  - {fileID: 586111209}

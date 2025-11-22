@@ -16,18 +16,15 @@ public class spawner : MonoBehaviour
     [SerializeField]
     private float collisionDistance = 1f;
 
-    private GameObject[] crabs;
-
     
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        crabs = new GameObject[numberOfCrabs];
         for (int i = 0; i < numberOfCrabs; i++)
         {
-            crabs[i] = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity, transform);
-            Crab crab = crabs[i].GetComponent<Crab>();
+            GameObject obj = Instantiate(crabPrefab, new Vector3(Random.Range(-10f, 10f), 0, Random.Range(-10f, 10f)), Quaternion.identity, transform);
+            Crab crab = obj.GetComponent<Crab>();
             crab.ShuffleGenes();
             crab.FullBelly();
             crab.eve = this;
@@ -38,6 +35,7 @@ public class spawner : MonoBehaviour
     // Update is called once per frame
     void DontUpdate()
     {
+        /*
         for (int i = 0; i < numberOfCrabs; i++)
         {
             for (int j = i + 1; j < numberOfCrabs; j++)
@@ -63,6 +61,6 @@ public class spawner : MonoBehaviour
                 }
             }
         }
-        
+        */
     }
 }

@@ -182,9 +182,9 @@ public class Crab : MonoBehaviour
         childGenes.speed = GeneMix(genes.speed, partner.genes.speed);
         childGenes.acceleration = GeneMix(genes.acceleration, partner.genes.acceleration);
         childGenes.steering = GeneMix(genes.steering, partner.genes.steering);
-        childGenes.smell = GeneMix(genes.smell, partner.genes.smell);
+        childGenes.smell = Mathf.Max(GeneMix(genes.smell, partner.genes.smell), 0f);
         childGenes.libidoThreshold = GeneMix(genes.libidoThreshold, partner.genes.libidoThreshold);
-        childGenes.vision = GeneMix(genes.vision, partner.genes.vision);
+        childGenes.vision = Mathf.Max(GeneMix(genes.vision, partner.genes.vision), 0f);
         childGenes.childRatio = Mathf.Clamp(ChildRatioMix(genes.childRatio, partner.genes.childRatio), 0f, MAX_CHILD_RATIO);
         childGenes.maxFoodLevel = GeneMix(genes.maxFoodLevel, partner.genes.maxFoodLevel);
 

@@ -44,7 +44,7 @@ public class AlgueGen : MonoBehaviour
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         // Generate algue every n seconds
         timeSinceGeneration -= Time.deltaTime;
