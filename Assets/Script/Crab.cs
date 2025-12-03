@@ -2,14 +2,6 @@ using UnityEngine;
 using UnityEngine.AI;
 public class Crab : MonoBehaviour
 {
-    // Crab stats
-    [Header ("Crab Stats")]
-
-    [SerializeField] 
-    private float m_speed = 1f;
-
-    [SerializeField]
-    private float m_weight = 10;
 
     [SerializeField]
     private LayerMask seaFoodLayer;
@@ -26,35 +18,36 @@ public class Crab : MonoBehaviour
 
     private NavMeshAgent agent;
 
+    [Header ("Crab Stats")]
     [SerializeField]
     private Genes genes;
 
     [HideInInspector]
     public spawner eve;
 
+    // Various simulation constant parameters
     const float TARGET_OFFSET = 0.3f;
     const float METABOLISM = 0.1f;
     const float SEX_REACH = 1.2f;
     const float INTERACT_DIST = 0.5f;
     const float FOOD_PER_BITE = 1.3f;
-    const float MAX_CHILD_RATIO = .95f;
+    const float MAX_CHILD_RATIO = .95f; // How much of their food level parents are allowed to give (prevent birth explosion)
+    const bool METABOLISM_INCREASES_OVER_TIME = true; // Forces population turnover
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         agent = gameObject.GetComponent<NavMeshAgent>();
-        m_speed = genes.speed;
-        m_weight = genes.weight;
 
-        agent.speed = m_speed;
+        agent.speed = genes.speed;
         agent.acceleration = genes.acceleration;
         agent.angularSpeed = genes.steering;
-        this.transform.localScale = Vector3.one * (1 + m_weight / 40f);
+        this.transform.localScale = Vector3.one * (1 + genes.weight / 40f);
     }
 
     void Update()
     {
-        foodLevel -= (METABOLISM + (Time.time - creationTime)/271f) * Time.deltaTime;
+        // Decrease foodLevel while taking into account the metabolism increase if acctivated
+        foodLevel -= Time.deltaTime * (METABOLISM + (METABOLISM_INCREASES_OVER_TIME ? (Time.time - creationTime)/271f : 0f));
         if (foodLevel < 0) {
             transform.localScale = new Vector3(1, -1, 1);
             agent.ResetPath();
@@ -64,18 +57,20 @@ public class Crab : MonoBehaviour
 
         GameObject hotCrabInYourVicinity = SeeHorny();
         GameObject yummyYummySeaGrass = SmelledFood();
-        if (IsHorny() && hotCrabInYourVicinity != null) {
+        if (IsHorny() && hotCrabInYourVicinity != null)
+        { // Wants to reproduce and has found a parter in his field of vision
             targetPos = hotCrabInYourVicinity.transform.position;
             if ((targetPos - transform.position).sqrMagnitude <= SEX_REACH*SEX_REACH)
                 Mate(hotCrabInYourVicinity.GetComponent<Crab>());
         }
-        else if (yummyYummySeaGrass != null) {
+        else if (yummyYummySeaGrass != null)
+        { // Has found food
             targetPos = yummyYummySeaGrass.transform.position;
             if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
                 NomNom(yummyYummySeaGrass.gameObject);
         }
         else if (!agent.hasPath || agent.remainingDistance < 0.5f)
-        {
+        { // Wanders randomely
             Vector3 randomDirection = Random.insideUnitSphere * 10f;
             randomDirection += transform.position;
             NavMeshHit hit;
@@ -84,7 +79,7 @@ public class Crab : MonoBehaviour
         }
 
         if ((targetPos - agent.destination).sqrMagnitude >= TARGET_OFFSET)
-        {
+        { // The current crabs target is too far from the path findings target (avoid recomputing a path every frame)
             agent.SetDestination(targetPos);
         }
 
@@ -96,18 +91,13 @@ public class Crab : MonoBehaviour
         }
     }
 
-    public float GetWeight()
-    {
-        return m_weight;
-    }
-
     public bool IsHorny()
-    {
+    { // Food level is high enough and the crab is old enough (prevent population explosion)
         return foodLevel >= genes.libidoThreshold && (Time.time - creationTime >= 1.5f);
     }
 
     public GameObject SeeHorny()
-    {
+    { // Return a parter if detected, null if not
         Collider[] crabs = Physics.OverlapSphere(
             gameObject.transform.position,
             genes.smell,
@@ -140,26 +130,26 @@ public class Crab : MonoBehaviour
     }
 
     public GameObject SmelledFood()
-    {
-        Collider[] seeWeeds = Physics.OverlapSphere(
+    { // Return a seaGrass if detected, null if not
+        Collider[] seaWeeds = Physics.OverlapSphere(
             gameObject.transform.position,
             genes.smell,
             seaFoodLayer.value
         );
 
-        if (seeWeeds == null || seeWeeds.Length == 0) return null;
+        if (seaWeeds == null || seaWeeds.Length == 0) return null;
 
-        GameObject closest = seeWeeds[0].gameObject;
-        foreach (Collider coll in seeWeeds) {
+        GameObject closest = seaWeeds[0].gameObject;
+        foreach (Collider coll in seaWeeds) {
             if ((transform.position - coll.transform.position).sqrMagnitude < (transform.position - closest.transform.position).sqrMagnitude)
                 closest = coll.gameObject;
         }
         return closest;
     }
 
-    private void NomNom(GameObject seeGrass)
-    {
-        Destroy(seeGrass);
+    private void NomNom(GameObject seaGrass)
+    { // Eat sea food
+        Destroy(seaGrass);
         if (foodLevel <= genes.maxFoodLevel) foodLevel += FOOD_PER_BITE;
     }
 
@@ -199,8 +189,9 @@ public class Crab : MonoBehaviour
         child.eve = eve;
     }
 
-    private float GeneMix(float valueA, float valueB) {
-        const float MUTATION_OFFSET = 3f;
+    private float GeneMix(float valueA, float valueB)
+    { // Mix genes with a mutation variation
+        const float MUTATION_OFFSET = 1f;
 
         return Random.Range(
             Mathf.Min(valueA, valueB) - MUTATION_OFFSET,
@@ -208,8 +199,9 @@ public class Crab : MonoBehaviour
         );
     }
 
-    private float ChildRatioMix(float valueA, float valueB) {
-        const float MUTATION_OFFSET = .005f;
+    private float ChildRatioMix(float valueA, float valueB)
+    { // Mix the child ratio (the value is not on a very different scale as other genes, hence the special mix
+        const float MUTATION_OFFSET = .01f;
 
         return Random.Range(
             Mathf.Min(valueA, valueB) - MUTATION_OFFSET,
@@ -217,7 +209,8 @@ public class Crab : MonoBehaviour
         );
     }
 
-    public void ShuffleGenes() {
+    public void ShuffleGenes()
+    { // Random starting genes
         genes.speed = Random.Range(4f, 20f);
         genes.acceleration = Random.Range(5f, 10f);
         genes.steering = Random.Range(90f, 120f);
