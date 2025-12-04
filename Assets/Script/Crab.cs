@@ -33,6 +33,9 @@ public class Crab : MonoBehaviour
     const float FOOD_PER_BITE = 1.3f;
     const float MAX_CHILD_RATIO = .95f; // How much of their food level parents are allowed to give (prevent birth explosion)
     const bool METABOLISM_INCREASES_OVER_TIME = true; // Forces population turnover
+    const float BATTLE_REACH = 0.5f;
+    const float WANT_TO_BATTLE_PROBABILITY = .3f;
+
 
     void Start()
     {
@@ -42,6 +45,17 @@ public class Crab : MonoBehaviour
         agent.acceleration = genes.acceleration;
         agent.angularSpeed = genes.steering;
         this.transform.localScale = Vector3.one * (1 + genes.weight / 40f);
+
+        // Give a random color to the crab
+        Color crabColor = new Color(
+            Random.Range(0.3f, 1f),
+            Random.Range(0.3f, 1f),
+            Random.Range(0.3f, 1f)
+        );
+        Renderer renderer = gameObject.GetComponent<Renderer>();
+        if (renderer != null) {
+            renderer.material.color = crabColor;
+        }
     }
 
     void Update()
@@ -49,19 +63,35 @@ public class Crab : MonoBehaviour
         // Decrease foodLevel while taking into account the metabolism increase if acctivated
         foodLevel -= Time.deltaTime * (METABOLISM + (METABOLISM_INCREASES_OVER_TIME ? (Time.time - creationTime)/271f : 0f));
         if (foodLevel < 0) {
-            transform.localScale = new Vector3(1, -1, 1);
-            agent.ResetPath();
-            Destroy(gameObject, 5f);
+            killYourself();
             return;
         }
 
         GameObject hotCrabInYourVicinity = SeeHorny();
+        GameObject battleOpponent = SeeBattleOpponent();
         GameObject yummyYummySeaGrass = SmelledFood();
         if (IsHorny() && hotCrabInYourVicinity != null)
         { // Wants to reproduce and has found a parter in his field of vision
             targetPos = hotCrabInYourVicinity.transform.position;
             if ((targetPos - transform.position).sqrMagnitude <= SEX_REACH*SEX_REACH)
                 Mate(hotCrabInYourVicinity.GetComponent<Crab>());
+        }
+        else if (isReadyToBattle() && battleOpponent != null)
+        { // Wants to battle and has found an opponent in his field of vision
+            targetPos = battleOpponent.transform.position;
+            if ((targetPos - transform.position).sqrMagnitude <= BATTLE_REACH*BATTLE_REACH)
+            {
+                if(winBattle(battleOpponent.GetComponent<Crab>()))
+                {
+                    eatOpponent(battleOpponent);
+                }
+                else
+                { // Lost the battle 
+                    Crab opponentCrab = battleOpponent.GetComponent<Crab>();
+                    opponentCrab.eatOpponent(this.gameObject);
+                    return;
+                }
+            }
         }
         else if (yummyYummySeaGrass != null)
         { // Has found food
@@ -91,9 +121,21 @@ public class Crab : MonoBehaviour
         }
     }
 
+    public void killYourself()
+    {
+        transform.localScale = new Vector3(1, -1, 1);
+        agent.ResetPath();
+        Destroy(gameObject, 5f);
+    }
+
     public bool IsHorny()
     { // Food level is high enough and the crab is old enough (prevent population explosion)
         return foodLevel >= genes.libidoThreshold && (Time.time - creationTime >= 1.5f);
+    }
+
+    public bool isReadyToBattle()
+    {
+        return Random.Range(0f, 1f) < WANT_TO_BATTLE_PROBABILITY;
     }
 
     public GameObject SeeHorny()
@@ -127,6 +169,58 @@ public class Crab : MonoBehaviour
         }
 
         return null;
+    }
+
+     public GameObject SeeBattleOpponent()
+    { // Return a battle partner if detected, null if not
+        Collider[] crabs = Physics.OverlapSphere(
+            gameObject.transform.position,
+            genes.battleRange,
+            crabLayer.value
+        );
+
+        if (crabs == null || crabs.Length == 0) return null;
+
+        GameObject closest = crabs[0].gameObject;
+        Crab crab = closest.gameObject.GetComponent<Crab>();
+
+        if (crab == this) {
+            if (crabs.Length == 1) return null;
+            else closest = crabs[1].gameObject;
+        }
+
+        foreach (Collider coll in crabs) {
+            crab = coll.gameObject.GetComponent<Crab>();
+            if (
+                crab != null &&
+                crab != this &&
+                crab.isReadyToBattle() &&
+                (transform.position - coll.transform.position).sqrMagnitude < (transform.position - closest.transform.position).sqrMagnitude
+            )
+                closest = coll.gameObject;
+            return closest;
+        }
+
+        return null;
+    }
+
+    public bool winBattle(Crab opponent)
+    {
+        float myPower = this.foodLevel + this.genes.weight;
+        float opponentPower = opponent.foodLevel + opponent.genes.weight;
+
+        return myPower >= opponentPower;
+    }
+
+    public void eatOpponent(GameObject opponent)
+    {
+        Crab oppCrab = opponent.GetComponent<Crab>();
+        if (oppCrab != null)
+        {
+            float foodGained = Mathf.Min(oppCrab.foodLevel * 0.8f, this.genes.maxFoodLevel - this.foodLevel); // Gain 80% of the opponent's food level
+            this.foodLevel += foodGained;
+            oppCrab.killYourself();
+        }
     }
 
     public GameObject SmelledFood()
@@ -180,6 +274,9 @@ public class Crab : MonoBehaviour
 
         childGenes.minChild = Mathf.Min(genes.minChild, partner.genes.minChild);
         childGenes.maxChild = Mathf.Max(genes.maxChild, partner.genes.maxChild);
+
+        childGenes.weight = GeneMix(genes.weight, partner.genes.weight);
+        childGenes.battleRange = GeneMix(genes.battleRange, partner.genes.battleRange);
         
         Crab child =
             Instantiate(this, transform.position + new Vector3(1, 0, 1), Quaternion.identity, eve.transform);
@@ -221,6 +318,8 @@ public class Crab : MonoBehaviour
         genes.vision = Random.Range(4f, 20f);
         genes.childRatio = Random.Range(0.2f, 0.8f);
         genes.maxFoodLevel = Random.Range(4f, 20f);
+        genes.weight = Random.Range(1f, 10f);
+        genes.battleRange = Random.Range(4f, 20f);
     }
 
     public void FullBelly() {
@@ -249,4 +348,5 @@ struct Genes {
     public float vision;
     public float childRatio;
     public float maxFoodLevel;
+    public float battleRange;
 }
