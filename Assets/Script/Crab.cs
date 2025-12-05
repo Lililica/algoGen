@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+
 public class Crab : MonoBehaviour
 {
 
@@ -15,14 +18,17 @@ public class Crab : MonoBehaviour
     [SerializeField]
     private float foodLevel;
     private float age;
+    private float latestDecision = -1f;
 
     private NavMeshAgent agent;
 
     [Header ("Crab Stats")]
     [SerializeField]
     private Genes genes;
+    private Reze_de_neurones reze;
+    [SerializeField]
+    private Stance stance = Stance.Roam;
 
-    [HideInInspector]
     public spawner eve;
 
     // Various simulation constant parameters
@@ -32,9 +38,10 @@ public class Crab : MonoBehaviour
     const float INTERACT_DIST = 0.5f;
     const float FOOD_PER_BITE = 1.3f;
     const float MAX_CHILD_RATIO = .95f; // How much of their food level parents are allowed to give (prevent birth explosion)
-    const bool METABOLISM_INCREASES_OVER_TIME = true; // Forces population turnover
+    const bool METABOLISM_INCREASES_OVER_TIME = false; // Forces population turnover
     const float BATTLE_REACH = 0.5f;
     const float WANT_TO_BATTLE_PROBABILITY = .3f;
+    const float DECISION_INTERVAL = 0.9f;
 
 
     void Start()
@@ -61,7 +68,8 @@ public class Crab : MonoBehaviour
     void Update()
     {
         // Decrease foodLevel while taking into account the metabolism increase if acctivated
-        foodLevel -= Time.deltaTime * (METABOLISM + (METABOLISM_INCREASES_OVER_TIME ? (Time.time - creationTime)/271f : 0f));
+        if (eve.transform.childCount > 20)
+            foodLevel -= Time.deltaTime * (METABOLISM + (METABOLISM_INCREASES_OVER_TIME ? (Time.time - creationTime)/271f : 0f));
         if (foodLevel < 0) {
             killYourself();
             return;
@@ -70,42 +78,97 @@ public class Crab : MonoBehaviour
         GameObject hotCrabInYourVicinity = SeeHorny();
         GameObject battleOpponent = SeeBattleOpponent();
         GameObject yummyYummySeaGrass = SmelledFood();
-        if (IsHorny() && hotCrabInYourVicinity != null)
-        { // Wants to reproduce and has found a parter in his field of vision
-            targetPos = hotCrabInYourVicinity.transform.position;
-            if ((targetPos - transform.position).sqrMagnitude <= SEX_REACH*SEX_REACH)
-                Mate(hotCrabInYourVicinity.GetComponent<Crab>());
-        }
-        else if (isReadyToBattle() && battleOpponent != null)
-        { // Wants to battle and has found an opponent in his field of vision
-            targetPos = battleOpponent.transform.position;
-            if ((targetPos - transform.position).sqrMagnitude <= BATTLE_REACH*BATTLE_REACH)
+
+        if (Time.time - latestDecision >= DECISION_INTERVAL)
+        {
+            latestDecision = Time.time;
+
+            float distMate = hotCrabInYourVicinity == null ? 300f : Vector3.Distance(transform.position, hotCrabInYourVicinity.transform.position);
+            float distFood = yummyYummySeaGrass == null ? 300f : Vector3.Distance(transform.position, yummyYummySeaGrass.transform.position);
+            float distOpponent = battleOpponent == null ? 300f : Vector3.Distance(transform.position, battleOpponent.transform.position);
+
+            List<float> inputs = new List<float> {distMate, distFood, distOpponent, foodLevel, genes.weight};
+            
+            if (reze == null) {
+                return;
+            }
+            List<float> outputs = reze.compute(inputs);
+            int res = 0;
+            for (int i = 1; i < outputs.Count; i++)
+                if (outputs[i] > outputs[res]) res = i;
+
+            switch (res)
             {
-                if(winBattle(battleOpponent.GetComponent<Crab>()))
-                {
-                    eatOpponent(battleOpponent);
-                }
-                else
-                { // Lost the battle 
-                    Crab opponentCrab = battleOpponent.GetComponent<Crab>();
-                    opponentCrab.eatOpponent(this.gameObject);
-                    return;
-                }
+                case 0:
+                    stance = Stance.Roam;
+                    break;
+
+                case 1:
+                    stance = Stance.Eat;
+                    break;
+
+                case 2:
+                    stance = Stance.Attack;
+                    break;
+
+                case 3:
+                    stance = Stance.Mate;
+                    break;
+
             }
         }
-        else if (yummyYummySeaGrass != null)
-        { // Has found food
-            targetPos = yummyYummySeaGrass.transform.position;
-            if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
-                NomNom(yummyYummySeaGrass.gameObject);
-        }
-        else if (!agent.hasPath || agent.remainingDistance < 0.5f)
-        { // Wanders randomely
-            Vector3 randomDirection = Random.insideUnitSphere * 10f;
-            randomDirection += transform.position;
-            NavMeshHit hit;
-            NavMesh.SamplePosition(randomDirection, out hit, 10f, 1);
-            targetPos = hit.position;
+
+
+        switch (stance)
+        {
+            case Stance.Roam:
+                if (!agent.hasPath || agent.remainingDistance < 0.5f)
+                { // Wanders randomely
+                    Vector3 randomDirection = Random.insideUnitSphere * 10f;
+                    randomDirection += transform.position;
+                    NavMeshHit hit;
+                    NavMesh.SamplePosition(randomDirection, out hit, 10f, 1);
+                    targetPos = hit.position;
+                }
+                break;
+
+            case Stance.Eat:
+                if (yummyYummySeaGrass != null)
+                { // Has found food
+                    targetPos = yummyYummySeaGrass.transform.position;
+                    if ((targetPos - transform.position).sqrMagnitude <= INTERACT_DIST*INTERACT_DIST)
+                        NomNom(yummyYummySeaGrass.gameObject);
+                }
+                break;
+
+            case Stance.Mate:
+                if (hotCrabInYourVicinity != null)
+                { // Wants to reproduce and has found a parter in his field of vision
+                    targetPos = hotCrabInYourVicinity.transform.position;
+                    if ((targetPos - transform.position).sqrMagnitude <= SEX_REACH*SEX_REACH)
+                        Mate(hotCrabInYourVicinity.GetComponent<Crab>());
+                }
+                break;
+
+            case Stance.Attack:
+                if (battleOpponent != null)
+                { // Wants to battle and has found an opponent in his field of vision
+                    targetPos = battleOpponent.transform.position;
+                    if ((targetPos - transform.position).sqrMagnitude <= BATTLE_REACH*BATTLE_REACH)
+                    {
+                        if(winBattle(battleOpponent.GetComponent<Crab>()))
+                        {
+                            eatOpponent(battleOpponent);
+                        }
+                        else
+                        { // Lost the battle 
+                            Crab opponentCrab = battleOpponent.GetComponent<Crab>();
+                            opponentCrab.eatOpponent(this.gameObject);
+                            return;
+                        }
+                    }
+                }
+                break;
         }
 
         if ((targetPos - agent.destination).sqrMagnitude >= TARGET_OFFSET)
@@ -123,14 +186,16 @@ public class Crab : MonoBehaviour
 
     public void killYourself()
     {
-        transform.localScale = new Vector3(1, -1, 1);
-        agent.ResetPath();
-        Destroy(gameObject, 5f);
+        if (eve.transform.childCount > 20) {
+            transform.localScale = new Vector3(1, -1, 1);
+            agent.ResetPath();
+            Destroy(gameObject, 5f);
+        }
     }
 
     public bool IsHorny()
     { // Food level is high enough and the crab is old enough (prevent population explosion)
-        return foodLevel >= genes.libidoThreshold && (Time.time - creationTime >= 1.5f);
+        return foodLevel >= genes.libidoThreshold; //&& (Time.time - creationTime >= 1.5f);
     }
 
     public bool isReadyToBattle()
@@ -172,7 +237,7 @@ public class Crab : MonoBehaviour
     }
 
      public GameObject SeeBattleOpponent()
-    { // Return a battle partner if detected, null if not
+     { // Return a battle partner if detected, null if not
         Collider[] crabs = Physics.OverlapSphere(
             gameObject.transform.position,
             genes.battleRange,
@@ -272,6 +337,7 @@ public class Crab : MonoBehaviour
         childGenes.childRatio = Mathf.Clamp(ChildRatioMix(genes.childRatio, partner.genes.childRatio), 0f, MAX_CHILD_RATIO);
         childGenes.maxFoodLevel = GeneMix(genes.maxFoodLevel, partner.genes.maxFoodLevel);
 
+
         childGenes.minChild = Mathf.Min(genes.minChild, partner.genes.minChild);
         childGenes.maxChild = Mathf.Max(genes.maxChild, partner.genes.maxChild);
 
@@ -281,6 +347,7 @@ public class Crab : MonoBehaviour
         Crab child =
             Instantiate(this, transform.position + new Vector3(1, 0, 1), Quaternion.identity, eve.transform);
         child.genes = childGenes;
+        child.reze = Reze_de_neurones.merge(reze, partner.reze);
         child.foodLevel = foodLevel * genes.childRatio;
         child.creationTime = Time.time;
         child.eve = eve;
@@ -320,6 +387,11 @@ public class Crab : MonoBehaviour
         genes.maxFoodLevel = Random.Range(4f, 20f);
         genes.weight = Random.Range(1f, 10f);
         genes.battleRange = Random.Range(4f, 20f);
+
+        reze = new Reze_de_neurones();
+        reze.create_liste_poids_cc();
+        reze.create_liste_poids_entrees();
+        reze.create_liste_poids_sorties();
     }
 
     public void FullBelly() {
@@ -349,4 +421,12 @@ struct Genes {
     public float childRatio;
     public float maxFoodLevel;
     public float battleRange;
+}
+
+[System.Serializable]
+enum Stance {
+    Roam,
+    Eat,
+    Mate,
+    Attack,
 }
