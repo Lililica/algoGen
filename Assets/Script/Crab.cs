@@ -296,7 +296,10 @@ public class Crab : MonoBehaviour
             seaFoodLayer.value
         );
 
-        if (seaWeeds == null || seaWeeds.Length == 0) return null;
+        if (seaWeeds == null || seaWeeds.Length == 0)
+        {
+            return null;
+        } 
 
         GameObject closest = seaWeeds[0].gameObject;
         foreach (Collider coll in seaWeeds) {

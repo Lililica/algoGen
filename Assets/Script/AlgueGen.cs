@@ -14,7 +14,24 @@ public class AlgueGen : MonoBehaviour
     [Header ("Algue Gen Stats")]
 
     [SerializeField]
-    private GameObject alguePrefab;
+    private GameObject alguePrefab1;
+    [SerializeField]
+    private GameObject alguePrefab2;
+    
+    private GameObject alguePrefab
+    {
+        get
+        {
+            if (Random.value > 0.5f)
+            {
+                return alguePrefab1;
+            }
+            else
+            {
+                return alguePrefab2;
+            }
+        }
+    }
 
     [SerializeField]
     private int maxAlgueCount = 1000;

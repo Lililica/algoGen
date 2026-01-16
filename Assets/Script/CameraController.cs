@@ -66,6 +66,14 @@ public class CameraController : MonoBehaviour
             newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
             
         }
+        if(Input.GetKey(KeyCode.R))
+        {
+            newPosition += (transform.up * movementSpeed);
+        }
+        if(Input.GetKey(KeyCode.F))
+        {
+            newPosition += (transform.up * -movementSpeed);
+        }
 
         transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * movementTime);
         transform.rotation = Quaternion.Lerp(transform.rotation, newRotation, Time.deltaTime * movementTime);
