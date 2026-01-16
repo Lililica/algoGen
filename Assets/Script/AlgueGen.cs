@@ -3,6 +3,9 @@ using System.Xml.Serialization;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.AI;
 
 public class AlgueGen : MonoBehaviour
 {
@@ -18,6 +21,7 @@ public class AlgueGen : MonoBehaviour
     [SerializeField]
     private int algueCount = 50;
 
+
     [SerializeField]
     private GameObject plane;
 
@@ -31,11 +35,15 @@ public class AlgueGen : MonoBehaviour
 
     private float timeSinceGeneration = 0f;
 
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         min = plane.GetComponent<Renderer>().bounds.min + Vector3.one * 0.5f;
         max = plane.GetComponent<Renderer>().bounds.max - Vector3.one * 0.5f;
+
+
 
         for(int i = 0; i < algueCount; i++)
         {
@@ -59,12 +67,31 @@ public class AlgueGen : MonoBehaviour
 
     private void GenerateAlgue()
     {
-        Vector3 randomPosition = new Vector3(
+        
+        GameObject enemy = Instantiate(alguePrefab, Vector3.zero, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+
+
+        Vector3 randomPos = new Vector3(
             Random.Range(min.x, max.x),
-            0f,
+            0,
             Random.Range(min.z, max.z)
         );
+        NavMeshHit Hit;
+        if (NavMesh.SamplePosition(randomPos, out Hit, Mathf.Infinity, -1))
+        {
+            enemy.GetComponent<NavMeshAgent>().Warp(Hit.position);
+        }
+        else
+        {
+            Debug.LogError($"Unable to place NavMeshAgent on NavMesh");
+        }
 
-        Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
+        // Vector3 randomPosition = new Vector3(
+        //     Random.Range(min.x, max.x),
+        //     plane.transform.position.y + 0.5f,
+        //     Random.Range(min.z, max.z)
+        // );
+
+        // Instantiate(alguePrefab, randomPosition, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
     }
 }
