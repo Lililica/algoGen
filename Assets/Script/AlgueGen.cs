@@ -68,7 +68,6 @@ public class AlgueGen : MonoBehaviour
     private void GenerateAlgue()
     {
         
-        GameObject enemy = Instantiate(alguePrefab, Vector3.zero, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
 
 
         Vector3 randomPos = new Vector3(
@@ -79,7 +78,7 @@ public class AlgueGen : MonoBehaviour
         NavMeshHit Hit;
         if (NavMesh.SamplePosition(randomPos, out Hit, Mathf.Infinity, -1))
         {
-            enemy.GetComponent<NavMeshAgent>().Warp(Hit.position);
+            GameObject enemy = Instantiate(alguePrefab, Hit.position, Quaternion.Euler(0f, Random.Range(0f, 360f), 0f), transform);
         }
         else
         {
