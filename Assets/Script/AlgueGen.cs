@@ -3,6 +3,9 @@ using System.Xml.Serialization;
 using UnityEngine;
 using Quaternion = UnityEngine.Quaternion;
 using Vector3 = UnityEngine.Vector3;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.AI;
 
 public class AlgueGen : MonoBehaviour
 {
@@ -18,8 +21,6 @@ public class AlgueGen : MonoBehaviour
     [SerializeField]
     private int algueCount = 50;
 
-    [SerializeField]
-    private GameObject plane;
 
     [SerializeField]
     private float generationInterval = 40f;
@@ -34,8 +35,8 @@ public class AlgueGen : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        min = plane.GetComponent<Renderer>().bounds.min + Vector3.one * 0.5f;
-        max = plane.GetComponent<Renderer>().bounds.max - Vector3.one * 0.5f;
+        // min = plane.GetComponent<Renderer>().bounds.min + Vector3.one * 0.5f;
+        // max = plane.GetComponent<Renderer>().bounds.max - Vector3.one * 0.5f;
 
         for(int i = 0; i < algueCount; i++)
         {
@@ -61,7 +62,7 @@ public class AlgueGen : MonoBehaviour
     {
         Vector3 randomPosition = new Vector3(
             Random.Range(min.x, max.x),
-            0f,
+            plane.transform.position.y + 0.5f,
             Random.Range(min.z, max.z)
         );
 
