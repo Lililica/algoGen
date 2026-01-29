@@ -462,6 +462,7 @@ public class Lsystem : MonoBehaviour
         }
     }
 
+    bool coucou = true;
     void Start()
     {
         //pour que l'utilisation de intersection_point_list marche bien 
@@ -486,5 +487,15 @@ public class Lsystem : MonoBehaviour
         group_objects g_o = parent.AddComponent<group_objects>();
         }
         chaine_instruction_precedent = chaine_instruction;
+
+
+        if(coucou)
+        {
+            Debug.Log("instanciation Lsystem");
+            GameObject arbreInstance = Instantiate(parent, new Vector3(0, 0, 0), Quaternion.identity);
+            arbreInstance.transform.position = new Vector3(Random.Range(-50,50),0,Random.Range(-50,50));
+            coucou = false;
+        }
+
     }
 }

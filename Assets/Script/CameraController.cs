@@ -39,29 +39,29 @@ public class CameraController : MonoBehaviour
         {
             movementSpeed = normalSpeed;
         }
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.W))
         {
             newPosition += (transform.forward * movementSpeed);
         }
-        if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        if (Input.GetKey(KeyCode.S) )
         {
             newPosition += (transform.forward * -movementSpeed);
         }
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (Input.GetKey(KeyCode.D) )
         {
             newPosition += (transform.right * movementSpeed);
         }
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.A) )
         {
             newPosition += (transform.right * -movementSpeed);
         }
 
-        if (Input.GetKey(KeyCode.Q))
+        if (Input.GetKey(KeyCode.LeftArrow))
         {
             newRotation *= Quaternion.Euler(Vector3.up * rotationAmount);
 
         }
-        if(Input.GetKey(KeyCode.E))
+        if(Input.GetKey(KeyCode.RightArrow))
         {
             newRotation *= Quaternion.Euler(Vector3.up * -rotationAmount);
             
@@ -73,6 +73,16 @@ public class CameraController : MonoBehaviour
         if(Input.GetKey(KeyCode.F))
         {
             newPosition += (transform.up * -movementSpeed);
+        }
+        if(Input.GetKey(KeyCode.UpArrow))
+        {
+            // Rotate up
+            newRotation *= Quaternion.Euler(Vector3.right * -rotationAmount);
+        }
+        if(Input.GetKey(KeyCode.DownArrow))
+        {
+            // Rotate down
+            newRotation *= Quaternion.Euler(Vector3.right * rotationAmount);
         }
 
         transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * movementTime);
