@@ -11,6 +11,7 @@ public class CameraController : MonoBehaviour
     public float movementSpeed = 0.01f;
     public float movementTime = 5f;
     public float rotationAmount = 0.15f;
+    public Transform spawn_point;
 
     public Vector3 newPosition;
     public Quaternion newRotation;
@@ -26,6 +27,15 @@ public class CameraController : MonoBehaviour
     void Update()
     {
         HandleMovementInput();
+    }
+
+    void check_too_far()
+    {
+        Vector3 vect_distance = spawn_point.position - transform.position;
+        if(vect_distance.magnitude > 50)
+        {
+            transform.position = spawn_point.position;
+        }
     }
     
     void HandleMovementInput()
@@ -74,19 +84,21 @@ public class CameraController : MonoBehaviour
         {
             newPosition += (transform.up * -movementSpeed);
         }
-        if(Input.GetKey(KeyCode.UpArrow))
-        {
-            // Rotate up
-            newRotation *= Quaternion.Euler(Vector3.right * -rotationAmount);
-        }
-        if(Input.GetKey(KeyCode.DownArrow))
-        {
-            // Rotate down
-            newRotation *= Quaternion.Euler(Vector3.right * rotationAmount);
-        }
+        // if(Input.GetKey(KeyCode.UpArrow))
+        // {
+        //     // Rotate up
+        //     newRotation *= Quaternion.Euler(Vector3.right * -rotationAmount);
+        // }
+        // if(Input.GetKey(KeyCode.DownArrow))
+        // {
+        //     // Rotate down
+        //     newRotation *= Quaternion.Euler(Vector3.right * rotationAmount);
+        // }
 
         transform.position = Vector3.Lerp(transform.position, newPosition, Time.deltaTime * movementTime);
         transform.rotation = Quaternion.Lerp(transform.rotation, newRotation, Time.deltaTime * movementTime);
     }
 
 }
+
+

@@ -94,11 +94,11 @@ public class CamController : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.R))
         {
-            p_Velocity += new Vector3(0, 1, 0);
+            p_Velocity += new Vector3(0, 10, 0);
         }
         if (Input.GetKey(KeyCode.F))
         {
-            p_Velocity += new Vector3(0, -1, 0);
+            p_Velocity += new Vector3(0, -10, 0);
         }
         // Rotation part
         if (Input.GetKey(KeyCode.Q))
